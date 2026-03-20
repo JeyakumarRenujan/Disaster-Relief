@@ -276,21 +276,53 @@ function pushChartData(timeLabel, temp, hum, s1, s2) {
   charts.waterChart.update();
 }
 
-function updateWarningUI(message) {
-  warningText.textContent = message;
+function updateWarningUI(temp, hum, s1, s2) {
 
-  if (message.includes("ALERT")) {
+  let isAlert = false;
+  let messages = [];
+
+  // Temperature check
+  if (temp > 25) {
+    isAlert = true;
+    messages.push("Temperature above 25°C");
+  }
+
+  // Humidity check
+  if (hum < 60 || hum > 70) {
+    isAlert = true;
+    messages.push("Humidity out of 60–70%");
+  }
+
+  // Water sensor check (your existing logic)
+  if (s1 > 384 && s2 > 384) {
+    isAlert = true;
+    messages.push("Water level high");
+  } 
+  else if (Math.abs(s1 - s2) > 512) {
+    isAlert = true;
+    messages.push("Water sensor mismatch");
+  }
+
+  // ===== FINAL DECISION =====
+  if (isAlert) {
     warningPanel.classList.remove("safe");
     warningPanel.classList.add("alert");
+
     warningBadge.textContent = "ALERT";
+    warningText.textContent = "ALERT: " + messages.join(" | ");
+
     heroStatus.textContent = "Critical environmental attention required";
-    heroSubtext.textContent = "One or more monitored values indicate a possible unsafe condition for relief materials.";
-  } else {
+    heroSubtext.textContent = "One or more monitored values are unsafe.";
+  } 
+  else {
     warningPanel.classList.remove("alert");
     warningPanel.classList.add("safe");
+
     warningBadge.textContent = "SAFE";
+    warningText.textContent = "NO ALERT - All readings within safe limits";
+
     heroStatus.textContent = "Environmental conditions are stable";
-    heroSubtext.textContent = "Current storage conditions appear acceptable for monitored relief materials.";
+    heroSubtext.textContent = "All monitored values are within safe range.";
   }
 }
 
@@ -447,7 +479,13 @@ async function fetchLiveData() {
 
     updateMetricAlerts(data.temperature, data.humidity, data.sensor1, data.sensor2);
 
-    updateWarningUI(data.warning);
+    updateWarningUI(
+      data.temperature,
+      data.humidity,
+      data.sensor1,
+      data.sensor2
+    );
+
     pushChartData(timeLabel, data.temperature, data.humidity, data.sensor1, data.sensor2);
     addHistoryRow(timeLabel, data.temperature, data.humidity, data.sensor1, data.sensor2, data.warning);
   } catch (error) {
