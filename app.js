@@ -1,5 +1,5 @@
-const ESP32_API = "http://10.208.164.237/data";     // change this
-const ESP32_STATUS = "http://10.208.164.237/status"; // change this
+const ESP32_API = "http://10.208.164.237/data";
+const ESP32_STATUS = "http://10.208.164.237/status";
 
 const temperatureValue = document.getElementById("temperatureValue");
 const humidityValue = document.getElementById("humidityValue");
@@ -16,6 +16,9 @@ const lastUpdate = document.getElementById("lastUpdate");
 const heroStatus = document.getElementById("heroStatus");
 const heroSubtext = document.getElementById("heroSubtext");
 const refreshBtn = document.getElementById("refreshBtn");
+const themeToggleBtn = document.getElementById("themeToggleBtn");
+const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+const sidebar = document.getElementById("sidebar");
 
 const labels = [];
 const temperatureData = [];
@@ -25,20 +28,62 @@ const sensor2Data = [];
 const maxPoints = window.innerWidth <= 640 ? 8 : 12;
 const historyRows = [];
 
-function getTickColor() {
-  return "#94a3b8";
+function getTheme() {
+  return document.documentElement.getAttribute("data-theme") || "dark";
 }
 
-function getGridColor() {
-  return "rgba(255,255,255,0.06)";
+function applySavedTheme() {
+  const savedTheme = localStorage.getItem("dashboard-theme");
+  if (savedTheme === "light" || savedTheme === "dark") {
+    document.documentElement.setAttribute("data-theme", savedTheme);
+  }
 }
 
-function getLegendColor() {
-  return "#eef4ff";
+function hexToRgba(hex, alpha) {
+  const cleaned = hex.replace("#", "");
+  const bigint = parseInt(cleaned, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-function makeChart(canvasId, label, dataArray) {
+function getThemePalette() {
+  const theme = getTheme();
+
+  if (theme === "light") {
+    return {
+      text: "#0f172a",
+      muted: "#64748b",
+      grid: "rgba(15, 23, 42, 0.10)",
+      temp: "#f97316",
+      hum: "#06b6d4",
+      s1: "#8b5cf6",
+      s2: "#ef476f"
+    };
+  }
+
+  return {
+    text: "#eef4ff",
+    muted: "#94a3b8",
+    grid: "rgba(255,255,255,0.06)",
+    temp: "#38bdf8",
+    hum: "#22d3ee",
+    s1: "#60a5fa",
+    s2: "#fb7185"
+  };
+}
+
+function createGradient(ctx, color) {
+  const gradient = ctx.createLinearGradient(0, 0, 0, 260);
+  gradient.addColorStop(0, hexToRgba(color, 0.35));
+  gradient.addColorStop(1, hexToRgba(color, 0.02));
+  return gradient;
+}
+
+function makeChart(canvasId, label, dataArray, lineColor) {
   const ctx = document.getElementById(canvasId).getContext("2d");
+  const palette = getThemePalette();
 
   return new Chart(ctx, {
     type: "line",
@@ -47,16 +92,24 @@ function makeChart(canvasId, label, dataArray) {
       datasets: [{
         label,
         data: dataArray,
-        borderWidth: 2,
-        tension: 0.35,
-        fill: false,
+        borderColor: lineColor,
+        backgroundColor: createGradient(ctx, lineColor),
+        borderWidth: 2.5,
+        tension: 0.38,
+        fill: true,
         pointRadius: window.innerWidth <= 640 ? 2 : 3,
-        pointHoverRadius: window.innerWidth <= 640 ? 3 : 4
+        pointHoverRadius: window.innerWidth <= 640 ? 4 : 5,
+        pointBackgroundColor: lineColor,
+        pointBorderColor: lineColor
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: {
+        duration: 900,
+        easing: "easeOutQuart"
+      },
       interaction: {
         mode: "index",
         intersect: false
@@ -64,28 +117,28 @@ function makeChart(canvasId, label, dataArray) {
       plugins: {
         legend: {
           labels: {
-            color: getLegendColor()
+            color: palette.text
           }
         }
       },
       scales: {
         x: {
           ticks: {
-            color: getTickColor(),
+            color: palette.muted,
             maxRotation: 0,
             autoSkip: true,
             maxTicksLimit: window.innerWidth <= 640 ? 4 : 8
           },
           grid: {
-            color: getGridColor()
+            color: palette.grid
           }
         },
         y: {
           ticks: {
-            color: getTickColor()
+            color: palette.muted
           },
           grid: {
-            color: getGridColor()
+            color: palette.grid
           }
         }
       }
@@ -93,71 +146,105 @@ function makeChart(canvasId, label, dataArray) {
   });
 }
 
-const temperatureChart = makeChart("temperatureChart", "Temperature (°C)", temperatureData);
-const humidityChart = makeChart("humidityChart", "Humidity (%)", humidityData);
+function createCharts() {
+  const palette = getThemePalette();
 
-const waterChart = new Chart(document.getElementById("waterChart").getContext("2d"), {
-  type: "line",
-  data: {
-    labels,
-    datasets: [
-      {
-        label: "Sensor 1",
-        data: sensor1Data,
-        borderWidth: 2,
-        tension: 0.35,
-        fill: false,
-        pointRadius: window.innerWidth <= 640 ? 2 : 3,
-        pointHoverRadius: window.innerWidth <= 640 ? 3 : 4
-      },
-      {
-        label: "Sensor 2",
-        data: sensor2Data,
-        borderWidth: 2,
-        tension: 0.35,
-        fill: false,
-        pointRadius: window.innerWidth <= 640 ? 2 : 3,
-        pointHoverRadius: window.innerWidth <= 640 ? 3 : 4
-      }
-    ]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: {
-      mode: "index",
-      intersect: false
-    },
-    plugins: {
-      legend: {
-        labels: {
-          color: getLegendColor()
-        }
-      }
-    },
-    scales: {
-      x: {
-        ticks: {
-          color: getTickColor(),
-          maxRotation: 0,
-          autoSkip: true,
-          maxTicksLimit: window.innerWidth <= 640 ? 4 : 8
+  const temperatureChart = makeChart("temperatureChart", "Temperature (°C)", temperatureData, palette.temp);
+  const humidityChart = makeChart("humidityChart", "Humidity (%)", humidityData, palette.hum);
+
+  const waterCtx = document.getElementById("waterChart").getContext("2d");
+
+  const waterChart = new Chart(waterCtx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Sensor 1",
+          data: sensor1Data,
+          borderColor: palette.s1,
+          backgroundColor: createGradient(waterCtx, palette.s1),
+          borderWidth: 2.5,
+          tension: 0.35,
+          fill: true,
+          pointRadius: window.innerWidth <= 640 ? 2 : 3,
+          pointHoverRadius: window.innerWidth <= 640 ? 4 : 5,
+          pointBackgroundColor: palette.s1,
+          pointBorderColor: palette.s1
         },
-        grid: {
-          color: getGridColor()
+        {
+          label: "Sensor 2",
+          data: sensor2Data,
+          borderColor: palette.s2,
+          backgroundColor: createGradient(waterCtx, palette.s2),
+          borderWidth: 2.5,
+          tension: 0.35,
+          fill: true,
+          pointRadius: window.innerWidth <= 640 ? 2 : 3,
+          pointHoverRadius: window.innerWidth <= 640 ? 4 : 5,
+          pointBackgroundColor: palette.s2,
+          pointBorderColor: palette.s2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: {
+        duration: 900,
+        easing: "easeOutQuart"
+      },
+      interaction: {
+        mode: "index",
+        intersect: false
+      },
+      plugins: {
+        legend: {
+          labels: {
+            color: palette.text
+          }
         }
       },
-      y: {
-        ticks: {
-          color: getTickColor()
+      scales: {
+        x: {
+          ticks: {
+            color: palette.muted,
+            maxRotation: 0,
+            autoSkip: true,
+            maxTicksLimit: window.innerWidth <= 640 ? 4 : 8
+          },
+          grid: {
+            color: palette.grid
+          }
         },
-        grid: {
-          color: getGridColor()
+        y: {
+          ticks: {
+            color: palette.muted
+          },
+          grid: {
+            color: palette.grid
+          }
         }
       }
     }
-  }
-});
+  });
+
+  return { temperatureChart, humidityChart, waterChart };
+}
+
+let charts = null;
+
+function destroyChartsIfNeeded() {
+  if (!charts) return;
+  charts.temperatureChart.destroy();
+  charts.humidityChart.destroy();
+  charts.waterChart.destroy();
+}
+
+function rebuildCharts() {
+  destroyChartsIfNeeded();
+  charts = createCharts();
+}
 
 function pushChartData(timeLabel, temp, hum, s1, s2) {
   labels.push(timeLabel);
@@ -174,9 +261,9 @@ function pushChartData(timeLabel, temp, hum, s1, s2) {
     sensor2Data.shift();
   }
 
-  temperatureChart.update();
-  humidityChart.update();
-  waterChart.update();
+  charts.temperatureChart.update();
+  charts.humidityChart.update();
+  charts.waterChart.update();
 }
 
 function updateWarningUI(message) {
@@ -305,11 +392,41 @@ async function fetchLiveData() {
   }
 }
 
+themeToggleBtn.addEventListener("click", () => {
+  const current = getTheme();
+  const next = current === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  localStorage.setItem("dashboard-theme", next);
+  rebuildCharts();
+});
+
+mobileMenuBtn.addEventListener("click", () => {
+  sidebar.classList.toggle("open");
+});
+
+document.addEventListener("click", (e) => {
+  if (window.innerWidth > 900) return;
+  if (!sidebar.classList.contains("open")) return;
+
+  const clickedInsideSidebar = sidebar.contains(e.target);
+  const clickedMenuButton = mobileMenuBtn.contains(e.target);
+
+  if (!clickedInsideSidebar && !clickedMenuButton) {
+    sidebar.classList.remove("open");
+  }
+});
+
 refreshBtn.addEventListener("click", () => {
   fetchStatus();
   fetchLiveData();
 });
 
+window.addEventListener("resize", () => {
+  rebuildCharts();
+});
+
+applySavedTheme();
+rebuildCharts();
 fetchStatus();
 fetchLiveData();
 

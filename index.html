@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,8 +11,10 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+  <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle sidebar">☰</button>
+
   <div class="app-shell">
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
       <div class="brand">
         <div class="brand-icon">DR</div>
         <div>
@@ -43,7 +45,9 @@
           <h1>Live Monitoring Dashboard</h1>
           <p>Real-time monitoring of disaster relief storage conditions</p>
         </div>
+
         <div class="topbar-actions">
+          <button id="themeToggleBtn">Toggle Theme</button>
           <button id="refreshBtn">Refresh Now</button>
         </div>
       </header>
@@ -152,7 +156,6 @@
             </table>
           </div>
 
-          <!-- Mobile-friendly history cards -->
           <div class="history-mobile-list" id="historyMobileList"></div>
         </div>
       </section>
