@@ -20,6 +20,16 @@ const themeToggleBtn = document.getElementById("themeToggleBtn");
 const mobileMenuBtn = document.getElementById("mobileMenuBtn");
 const sidebar = document.getElementById("sidebar");
 
+const tempCard = document.getElementById("tempCard");
+const humidityCard = document.getElementById("humidityCard");
+const sensor1Card = document.getElementById("sensor1Card");
+const sensor2Card = document.getElementById("sensor2Card");
+
+const tempAlertText = document.getElementById("tempAlertText");
+const humidityAlertText = document.getElementById("humidityAlertText");
+const sensor1AlertText = document.getElementById("sensor1AlertText");
+const sensor2AlertText = document.getElementById("sensor2AlertText");
+
 const labels = [];
 const temperatureData = [];
 const humidityData = [];
@@ -367,6 +377,60 @@ async function fetchStatus() {
   }
 }
 
+function updateMetricAlerts(temp, hum, s1, s2) {
+  // Temperature: alert if above 25C
+  if (temp > 25) {
+    tempAlertText.textContent = "Alert: Above 25°C";
+    tempAlertText.className = "card-alert alert-text";
+    tempCard.classList.add("alert-card");
+    tempCard.classList.remove("safe-card");
+  } else {
+    tempAlertText.textContent = "Normal: Within safe limit";
+    tempAlertText.className = "card-alert safe-text";
+    tempCard.classList.add("safe-card");
+    tempCard.classList.remove("alert-card");
+  }
+
+  // Humidity: alert if below 60 or above 70
+  if (hum < 60 || hum > 70) {
+    humidityAlertText.textContent = "Alert: Below 60% or above 70%";
+    humidityAlertText.className = "card-alert alert-text";
+    humidityCard.classList.add("alert-card");
+    humidityCard.classList.remove("safe-card");
+  } else {
+    humidityAlertText.textContent = "Normal: Between 60% and 70%";
+    humidityAlertText.className = "card-alert safe-text";
+    humidityCard.classList.add("safe-card");
+    humidityCard.classList.remove("alert-card");
+  }
+
+  // Water Sensor 1
+  if (s1 > 384) {
+    sensor1AlertText.textContent = "Alert: Water level high";
+    sensor1AlertText.className = "card-alert alert-text";
+    sensor1Card.classList.add("alert-card");
+    sensor1Card.classList.remove("safe-card");
+  } else {
+    sensor1AlertText.textContent = "Normal: Safe reading";
+    sensor1AlertText.className = "card-alert safe-text";
+    sensor1Card.classList.add("safe-card");
+    sensor1Card.classList.remove("alert-card");
+  }
+
+  // Water Sensor 2
+  if (s2 > 384) {
+    sensor2AlertText.textContent = "Alert: Water level high";
+    sensor2AlertText.className = "card-alert alert-text";
+    sensor2Card.classList.add("alert-card");
+    sensor2Card.classList.remove("safe-card");
+  } else {
+    sensor2AlertText.textContent = "Normal: Safe reading";
+    sensor2AlertText.className = "card-alert safe-text";
+    sensor2Card.classList.add("safe-card");
+    sensor2Card.classList.remove("alert-card");
+  }
+}
+
 async function fetchLiveData() {
   try {
     const res = await fetch(ESP32_API);
@@ -380,6 +444,8 @@ async function fetchLiveData() {
     sensor1Value.textContent = data.sensor1;
     sensor2Value.textContent = data.sensor2;
     lastUpdate.textContent = timeLabel;
+
+    updateMetricAlerts(data.temperature, data.humidity, data.sensor1, data.sensor2);
 
     updateWarningUI(data.warning);
     pushChartData(timeLabel, data.temperature, data.humidity, data.sensor1, data.sensor2);

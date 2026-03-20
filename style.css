@@ -293,6 +293,51 @@ body {
   font-size: 14px;
 }
 
+.card-alert {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.safe-text {
+  background: rgba(25,195,125,0.12);
+  color: #86efac;
+  border-color: rgba(25,195,125,0.22);
+}
+
+.alert-text {
+  background: rgba(239,68,68,0.14);
+  color: #fca5a5;
+  border-color: rgba(239,68,68,0.24);
+  box-shadow: 0 0 18px rgba(239,68,68,0.12);
+}
+
+html[data-theme="light"] .safe-text {
+  background: rgba(22,163,74,0.10);
+  color: #15803d;
+  border-color: rgba(22,163,74,0.18);
+}
+
+html[data-theme="light"] .alert-text {
+  background: rgba(220,38,38,0.10);
+  color: #b91c1c;
+  border-color: rgba(220,38,38,0.18);
+}
+
+.metric-card.alert-card {
+  box-shadow: 0 0 24px rgba(239,68,68,0.16), var(--card-shadow);
+  border-color: rgba(239,68,68,0.22);
+}
+
+.metric-card.safe-card {
+  box-shadow: 0 0 18px rgba(25,195,125,0.10), var(--card-shadow);
+}
+
 .temperature { border-top: 4px solid #f97316; }
 .humidity    { border-top: 4px solid #06b6d4; }
 .water1      { border-top: 4px solid #8b5cf6; }
@@ -701,3 +746,4 @@ tbody tr:hover {
     width: 100%;
   }
 }
+
