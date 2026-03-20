@@ -1,5 +1,7 @@
-const ESP32_API = "http://10.208.164.237/data";
-const ESP32_STATUS = "http://10.208.164.237/status";
+const ESP32_IP = "10.81.92.237";
+
+const ESP32_API = `http://${ESP32_IP}/data`;
+const ESP32_STATUS = `http://${ESP32_IP}/status`;
 
 const temperatureValue = document.getElementById("temperatureValue");
 const humidityValue = document.getElementById("humidityValue");
